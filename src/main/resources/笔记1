@@ -1,0 +1,765 @@
+
+一、用户画像项目分析
+-------------------------------------------------------
+    1.概念
+        用户画像也叫用户信息标签化、客户信息。 根据用户的信息和行为动作，用一些标签把用户描绘出来，描绘的标签就是用户画像。
+
+    2.项目简介
+        通过手机安装的app，判断机主的年龄区间和性别
+        通过对app设置性别和年龄段的相应权重结合用户每天使用app的时长和次数
+        //核心算法
+        /** 性别融合 */
+        public void protraitSex(double newdata1, double newdata2, long factor) {
+            double sum = (this.data1 + this.data2 + (newdata1 + newdata2) * factor);
+            if(sum != 0){
+                this.data1 = (this.data1 + newdata1 * times) / sum;
+                this.data2 = (this.data2 + newdata2 * times) / sum;
+            }
+        }
+
+    3.几个概念
+        a.appID:用于标记APP，APP的唯一编号，判断终端安装的APP
+
+        b.年龄段说明
+        名称 ==> 说明
+        年龄段1 ==> 24岁以下
+        年龄段2 ==> 25-30岁
+        年龄段3 ==> 31-35岁
+        年龄段4 ==> 36-40岁
+        年龄段5 ==> 40岁以上
+
+        c.标签库
+           标签库的设计，主要是针对应用市场上主流的App，对App进行分类，App分类信息包括：App名称，男女权重信息，各个年龄段的权重信息。
+           AppID|App名称|男性权重|女性权重|年龄段1|年龄段2|年龄段3|年龄段4|年龄段5
+           10001|QQ|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10002|飞信|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10003|MSN|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10004|阿里旺旺|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10005|微信|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10006|陌陌|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10007|米聊|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10008|啪啪|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10009|飞聊|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10010|来往|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10011|连我|0.001|0.001|0|0.2|0.3|0.2|0.3
+           10012|有你|0.001|0.001|0|0.2|0.3|0.2|0.3
+
+    4.画像数据
+        10011|连我|0.001|0.001|0|0.2|0.3|0.2|0.3
+        10012|有你|0.001|0.001|0|0.2|0.3|0.2|0.3
+        10013|Kakao Talk|0.001|0.001|0|0.2|0.3|0.2|0.3
+        10014|Whatsapp|0.001|0.001|0|0.2|0.3|0.2|0.3
+        10015|比邻|0.001|0.001|0|0.2|0.3|0.2|0.3
+        20016|新浪读书|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        20017|潇湘书院|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        20018|红袖添香|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        20019|纵横中文网|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        20020|掌上书院|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        20021|和阅读|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        20022|掌阅iReader|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        20023|QQ阅读|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        20024|百阅|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        20025|塔读小说|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        20026|Flipboard|0.001|0.001|0.1|0.3|0.3|0.2|0.1
+        ...
+        ...
+
+    5.汇总周期
+        每天汇总一次，建议当天凌晨统计前一天数据
+
+    6.注意事项
+        a.必备条件：性别比例、年龄比例必须在识别出AppID后进行，如果AppID编号为空，则不做处理。
+        b.性别和年龄的判断，都依赖于标签库的设计，也就是用户手机安装的App，根据手机App计算用户的性别和年龄权重信息，最后判断用户的年龄和性别。
+
+
+二、开始项目
+-----------------------------------------------------
+    1.编写用户画像类
+        package userdraw;
+        import java.math.BigDecimal;
+
+        /**
+         * 用户画像
+         **/
+        public class UserDraw {
+
+            // 属性
+            private String statTimeDay;
+            private String MDN;		//手机号
+            private double male;	//男性
+            private double female;	//	女性
+            private double age1;
+            private double age2;
+            private double age3;
+            private double age4;
+            private double age5;
+
+
+            // 重写toString
+            public String toString() {
+                StringBuffer sb = new StringBuffer();
+                sb.append(statTimeDay).append("|");
+                sb.append(MDN).append("|");
+                sb.append(new BigDecimal(male).setScale(3, 4).doubleValue()).append("|");
+                sb.append(new BigDecimal(female).setScale(3, 4).doubleValue()).append("|");
+                sb.append(new BigDecimal(age1).setScale(3, 4).doubleValue()).append("|");
+                sb.append(new BigDecimal(age2).setScale(3, 4).doubleValue()).append("|");
+                sb.append(new BigDecimal(age3).setScale(3, 4).doubleValue()).append("|");
+                sb.append(new BigDecimal(age4).setScale(3, 4).doubleValue()).append("|");
+                sb.append(new BigDecimal(age5).setScale(3, 4).doubleValue()).append("|");
+
+                return sb.toString();
+            }
+
+            // 融合方法
+            /** 性别融合 */
+            public void protraitSex(double male2, double female2, long times) {
+                double sum = (this.male + this.female + (male2 + female2) * times);
+                if(sum != 0){
+                    this.male = (this.male + male2 * times) / sum;
+                    this.female = (this.female + female2 * times) / sum;
+                }
+            }
+
+            /** 年龄段融合 */
+            public void protraitAge(double pAge1, double pAge2, double pAge3, double pAge4, double pAge5, long times) {
+                double sum = (age1 + age2 + age3 + age4 + age5 ) // 之前的APP的
+                        + (pAge1 + pAge2 + pAge3 + pAge4 + pAge5 ) * times;// 当前的APP的
+                if(sum != 0){
+                    this.age1 = (pAge1 * times + age1) / sum;
+                    this.age2 = (pAge2 * times + age2) / sum;
+                    this.age3 = (pAge3 * times + age3) / sum;
+                    this.age4 = (pAge4 * times + age4) / sum;
+                    this.age5 = (pAge5 * times + age5) / sum;
+                }
+            }
+
+            /** 初始化男女概率 */
+            public void initSex(float male, float female) {
+                float sum = male + female;
+                if(sum != 0){
+                    this.male = male / sum;
+                    this.female = female / sum;
+                }
+            }
+
+            /** 初始化年龄段概率 */
+            public void initAge(float pAge1, float pAge2, float pAge3, float pAge4, float pAge5) {
+                float sum = pAge1 + pAge2 + pAge3 + pAge4 + pAge5;
+                if(sum != 0){
+                    this.age1 = pAge1 / sum;
+                    this.age2 = pAge2 / sum;
+                    this.age3 = pAge3 / sum;
+                    this.age4 = pAge4 / sum;
+                    this.age5 = pAge5 / sum;
+                }
+            }
+
+
+            // setter and getter method
+            public String getStatTimeDay() {
+                return statTimeDay;
+            }
+
+            public void setStatTimeDay(String statTimeDay) {
+                this.statTimeDay = statTimeDay;
+            }
+
+
+            public String getMDN() {
+                return MDN;
+            }
+
+            public void setMDN(String mDN) {
+                MDN = mDN;
+            }
+
+
+            public double getMale() {
+                return male;
+            }
+
+            public double getFemale() {
+                return female;
+            }
+
+            public double getAge1() {
+                return age1;
+            }
+
+            public double getAge2() {
+                return age2;
+            }
+
+            public double getAge3() {
+                return age3;
+            }
+
+            public double getAge4() {
+                return age4;
+            }
+
+            public double getAge5() {
+                return age5;
+            }
+        }
+
+    2.编写主入口函数
+        public static void main(String[] args) throws Exception {
+        		Configuration conf = new Configuration();
+        		Job job1 = Job.getInstance(conf, "UserDrawMapReduceJob1");
+        		job1.setJarByClass(UserDrawMapReduce.class);
+
+        		job1.setMapperClass(MyMap.class);
+        		job1.setReducerClass(MyReduce.class);
+
+        		job1.setMapOutputKeyClass(Text.class);
+        		job1.setMapOutputValueClass(TextArrayWritable.class);
+        		job1.setOutputKeyClass(Text.class);
+        		job1.setOutputValueClass(Text.class);
+
+        		job1.setInputFormatClass(TextInputFormat.class);
+        		job1.setOutputFormatClass(TextOutputFormat.class);
+
+        		FileInputFormat.addInputPath(job1, new Path("file:///D:\\share\\project\\userdraw\\data"));// 输入路径
+        		FileOutputFormat.setOutputPath(job1, new Path("file:///D:\\share\\project\\userdraw\\out"));// 输出路径
+
+        		Boolean state1 = job1.waitForCompletion(true);
+        		System.out.println("job1执行成功！！！");
+        			if (state1) {
+        				conf = new Configuration();
+        				Job job2 = Job.getInstance(conf, "UserDrawMapReduceJob2");
+        				job2.setJarByClass(UserDrawMapReduce.class);
+
+        				job2.setMapperClass(MyMap2.class);
+        				job2.setReducerClass(MyReduce2.class);
+
+        				job2.setMapOutputKeyClass(Text.class);
+        				job2.setMapOutputValueClass(Text.class);
+        				job2.setOutputKeyClass(Text.class);
+        				job2.setOutputValueClass(Text.class);
+
+        				job2.setInputFormatClass(TextInputFormat.class);
+        				job2.setOutputFormatClass(TextOutputFormat.class);
+
+        				FileInputFormat.addInputPath(job2, new Path("file:///D:\\share\\project\\userdraw\\out"));// 输入路径
+        				FileOutputFormat.setOutputPath(job2, new Path("file:///D:\\share\\project\\userdraw\\out2"));// 输出路径
+
+        				Boolean state2 = job2.waitForCompletion(true);
+        				System.out.println("job2执行成功！！！");
+        				if (state2) {
+        					conf = new Configuration();
+        					// 设置zookeeper
+        					conf.set(UserDrawMapReduce.conf.consite, UserDrawMapReduce.conf.hbaseip);
+        					// 设置hbase表名称
+        					conf.set(TableOutputFormat.OUTPUT_TABLE, UserDrawMapReduce.conf.tableDraw);
+        					// 将该值改大，防止hbase超时退出
+        					conf.set(UserDrawMapReduce.conf.coftime, UserDrawMapReduce.conf.time);
+        					Job job3 = Job.getInstance(conf,
+        							"UserDrawPutInHbase");
+        					job3.setJarByClass(UserDrawMapReduce.class);
+        					TableMapReduceUtil.addDependencyJars(job3);
+
+        					FileInputFormat.setInputPaths(job3, new Path("file:///D:\\share\\project\\userdraw\\out2"));
+
+        					job3.setMapperClass(UserDrawPutInHbaseMap.class);
+        					job3.setMapOutputKeyClass(Text.class);
+        					job3.setMapOutputValueClass(Text.class);
+
+        					job3.setReducerClass(UserDrawPutInHbaseReduce.class);
+        					job3.setOutputFormatClass(TableOutputFormat.class);
+
+        					job3.waitForCompletion(true);
+        				}
+        		}
+        	}
+
+    3.编写MR作业类
+        a.第一次MR作业
+          public class UserDrawMapReduce {
+          	public static Config conf = new Config();
+
+          	public static class MyMap extends Mapper<LongWritable, Text, Text, TextArrayWritable> {
+          		Text k = new Text();
+
+          		public void map(LongWritable key, Text value, Context context)
+          				throws IOException, InterruptedException {
+          			//一行文本
+          			String line = value.toString();
+          			//通过 | 进行切割
+          			String[] dataArray = line.split(conf.Separator);
+          			//唯一标识：手机号+appid
+          			String uiqkey = dataArray[Integer.parseInt(conf.MDN)]
+          						+ dataArray[Integer.parseInt(conf.appID)]; // MDN + appID
+          			String[] val = new String[5];
+          			//时间
+          			String timenow = dataArray[Integer.parseInt(conf.Date)];
+          			SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+          			val[0] = sdf.format(Long.parseLong(timenow));//时间
+          			val[1] = dataArray[Integer.parseInt(conf.MDN)];// 手机号
+          			val[2] = dataArray[Integer.parseInt(conf.appID)];// appID
+          			val[3] = "1";// 计数
+          			val[4] = dataArray[Integer.parseInt(conf.ProcedureTime)];// 使用时长
+          			k.set(uiqkey);
+          			context.write(k, new TextArrayWritable(val));
+
+          		}
+          	}
+
+          	/**
+          	 * 统计 每个软件使用的总次数和总时间，按照unikey进行聚合
+          	 */
+          	public static class MyReduce extends Reducer<Text, TextArrayWritable, Text, Text> {
+          		Text v = new Text();
+          		public void reduce(Text key, Iterable<TextArrayWritable> values,
+          				Context context) throws IOException, InterruptedException {
+          			long sum = 0;
+          			int count = 0;
+          			String[] res = new String[5];
+          			boolean flg = true;
+          			for (TextArrayWritable t : values) {
+          				String[] vals = t.toStrings();
+          				if (flg) {
+          					res = vals;
+          				}
+          				if (vals[3] != null) {
+          					count = count + 1;
+
+          				}
+          				if (vals[4] != null) {
+          					sum += Long.valueOf(vals[4]);
+          				}
+          			}
+          			res[3] = String.valueOf(count);
+          			res[4] = String.valueOf(sum);
+
+          			StringBuffer sb = new StringBuffer();
+          			sb.append(res[0]).append("|");// 时间
+          			sb.append(res[1]).append("|");// 手机号
+          			sb.append(res[2]).append("|");// appID
+          			sb.append(res[3]).append("|");// 计数
+          			sb.append(res[4]);// 使用时长
+          			v.set(sb.toString());
+          			context.write(null, v);
+          		}
+          	}
+          }
+
+        b.第二次MR作业
+           package userdrawmr;
+
+           import java.io.IOException;
+           import java.util.HashMap;
+           import java.util.Map;
+           import java.util.Set;
+           import org.apache.hadoop.io.LongWritable;
+           import org.apache.hadoop.io.Text;
+           import org.apache.hadoop.mapreduce.Mapper;
+           import org.apache.hadoop.mapreduce.Reducer;
+
+           import userdraw.UserDraw;
+           import util.LoadHdfsTable;
+
+           public class UserDrawMapReduce2 {
+
+           	public static class MyMap2 extends Mapper<LongWritable, Text, Text, Text> {
+           		Text k = new Text();
+
+           		//更改key为手机号
+           		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+           			String line = value.toString();
+           			String[] dataArray = line.split("\\|");
+           			String newkey = dataArray[1] ; // MDN手机号
+           			k.set(newkey);
+
+           			context.write(k, value);
+           		}
+           	}
+
+           	public static class MyReduce2 extends Reducer<Text, Text, Text, Text> {
+           		Map<String, String[]> appMap = LoadHdfsTable.getAppMap();
+           		Text v = new Text();
+           		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+           			Map<String, UserDraw> userDrawMap = new HashMap<String, UserDraw>();
+           			Set<String> keySet = userDrawMap.keySet();
+           			String keyMDN = null;
+           			for (Text t : values) {
+
+           				String[] dataArray = t.toString().split("\\|");
+           				 keyMDN = dataArray[1]; // 用户MDN
+           				String appID = dataArray[2]; // APPID
+           				// 根据appID获取对应的标签信息
+           				if (appID.length() > 0) { // appID不能为空
+           					if (appMap.get(appID) == null) {
+           						continue;
+           					}
+           					String favourite = appMap.get(appID)[2];
+           					float male = Float.parseFloat(appMap.get(appID)[1]);
+           					float female = Float.parseFloat(appMap.get(appID)[2]);
+           					float age1 = Float.parseFloat(appMap.get(appID)[3]);
+           					float age2 = Float.parseFloat(appMap.get(appID)[4]);
+           					float age3 = Float.parseFloat(appMap.get(appID)[5]);
+           					float age4 = Float.parseFloat(appMap.get(appID)[6]);
+           					float age5 = Float.parseFloat(appMap.get(appID)[7]);
+
+           					long times = Long.parseLong(dataArray[4]);
+           					if (userDrawMap.containsKey(keyMDN)==true) {
+           						UserDraw userDraw = userDrawMap.get(keyMDN);
+           						// 性别权重
+           						userDraw.protraitSex(male, female, times);
+           						// 年龄段权重
+           						userDraw.protraitAge(age1, age2, age3, age4, age5, times);
+
+           					} else {
+           						userDrawMap.put(keyMDN, createDrawData(dataArray, favourite, male, female, age1, age2, age3, age4, age5, times));
+           					}
+           				}
+           			}
+           			for (String keys : keySet) {
+           				v.set(userDrawMap.get(keys).toString());
+           				context.write(null, v);
+
+           			}
+           		}
+           	}
+
+
+           	// 创建画像数据
+           	private static  UserDraw createDrawData(String[] dataArray, //
+           			String favourite, //兴趣爱好
+           			float male, float female, //性别
+           			float age1, float age2, float age3, float age4, float age5, //年龄
+           			long times) {
+
+           		UserDraw userDraw = new UserDraw();
+           		userDraw.setStatTimeDay(dataArray[0]);
+           		userDraw.setMDN(dataArray[1]);
+
+
+           		// 初始化
+           		userDraw.initAge(age1, age2, age3, age4, age5);
+           		userDraw.initSex(male, female);
+
+           		return userDraw;
+           	}
+           }
+
+
+        c.第三次MR作业，将数据写入到Hbase
+            package userdrawputinhbase;
+
+            import java.io.IOException;
+
+            import org.apache.hadoop.io.LongWritable;
+            import org.apache.hadoop.io.Text;
+            import org.apache.hadoop.mapreduce.Mapper;
+
+
+            public class UserDrawPutInHbaseMap extends Mapper<LongWritable, Text, Text, Text>{
+            	Text k2 = new Text();
+            	Text v2 = new Text();
+
+            	@Override
+            	protected void map(LongWritable key, Text value, Mapper<LongWritable, Text, Text, Text>.Context context)
+            			throws IOException, InterruptedException {
+            		String line = value.toString();
+            		String[] splited = line.split("\\|");
+
+
+            			k2.set(splited[1]);
+            			v2.set(line);
+
+            		context.write(k2, v2);
+            	}
+            }
+            --------------------------------------------------------------------
+
+            package userdrawputinhbase;
+
+            import java.io.IOException;
+
+            import org.apache.hadoop.hbase.client.Durability;
+            import org.apache.hadoop.hbase.client.Mutation;
+            import org.apache.hadoop.hbase.client.Put;
+            import org.apache.hadoop.hbase.mapreduce.TableReducer;
+            import org.apache.hadoop.hbase.util.Bytes;
+            import org.apache.hadoop.io.NullWritable;
+            import org.apache.hadoop.io.Text;
+            import org.apache.hadoop.mapreduce.Reducer;
+
+            public class UserDrawPutInHbaseReduce extends TableReducer<Text, Text, NullWritable>{
+
+                @SuppressWarnings("deprecation")
+                @Override
+                protected void reduce(Text k2, Iterable<Text> val,
+                        Reducer<Text, Text, NullWritable,Mutation>.Context context)
+                        throws IOException, InterruptedException {
+                    for (Text v2 : val) {
+                        String[] splited = v2.toString().split("\\|");
+                        //rowkey
+                        if(k2.toString().length()!=0){
+                            Put put = new Put(Bytes.toBytes(k2.toString()));
+
+                            //跳过写入Hlog，提高写入速度
+                            put.setDurability(Durability.SKIP_WAL);
+                            put.add(Bytes.toBytes("draw"), Bytes.toBytes("mdn"), Bytes.toBytes(splited[1]));
+                            put.add(Bytes.toBytes("draw"), Bytes.toBytes("male"), Bytes.toBytes(splited[2]));
+                            put.add(Bytes.toBytes("draw"), Bytes.toBytes("female"), Bytes.toBytes(splited[3]));
+                            put.add(Bytes.toBytes("draw"), Bytes.toBytes("age1"), Bytes.toBytes(splited[4]));
+                            put.add(Bytes.toBytes("draw"), Bytes.toBytes("age2"), Bytes.toBytes(splited[5]));
+                            put.add(Bytes.toBytes("draw"), Bytes.toBytes("age3"), Bytes.toBytes(splited[6]));
+                            put.add(Bytes.toBytes("draw"), Bytes.toBytes("age4"), Bytes.toBytes(splited[7]));
+                            put.add(Bytes.toBytes("draw"), Bytes.toBytes("age5"), Bytes.toBytes(splited[8]));
+                            context.write(NullWritable.get(), put);
+                        }
+
+                    }
+
+                }
+            }
+
+
+    4.工具类
+        a.Config.class
+            package util;
+
+            import java.io.IOException;
+            import java.io.InputStream;
+            import java.util.Properties;
+
+            public class Config {
+                static Properties properties;
+                static{
+                    properties = new Properties();
+                    //可以获取资源文件
+                    InputStream inStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("UserDraw.properties");
+                    try {
+                        properties.load(inStream);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                //UserDraw
+                public String Separator = properties.getProperty("Separator");
+                public String Date = properties.getProperty("Date");
+                public String MDN = properties.getProperty("MDN");
+                public String appID = properties.getProperty("appID");
+                public String count = properties.getProperty("count");
+                public String ProcedureTime = properties.getProperty("ProcedureTime");
+                //Hbase
+                public String consite = properties.getProperty("consite");
+                public String hbaseip = properties.getProperty("hbaseip");
+                public String coftime = properties.getProperty("coftime");
+                public String time = properties.getProperty("time");
+                public String tableDraw = properties.getProperty("tableDraw");
+            }
+
+        b.LoadHdfsTable.class
+            package util;
+
+            import java.io.BufferedReader;
+            import java.util.HashMap;
+            import java.util.Map;
+
+            public class LoadHdfsTable {
+            	public static String appTab = "/home/appTab.txt";
+
+            	private static Map<String, String[]> appMap = new HashMap<String, String[]>();
+            	static {
+            		try {
+            			StringBuffer sb = new StringBuffer();
+            			String line = null;
+            			BufferedReader breader = ReadHdfsFile.fileReader(appTab);
+            			while ((line = breader.readLine()) != null) {
+            				String[] appArray = line.split("\\|");
+            				// appName
+            				sb.append(appArray[1]).append(",");
+            				// 性别权重
+            				sb.append(appArray[2]).append(",").append(appArray[3]).append(",");
+            				// 年龄段权重
+            				sb.append(appArray[4]).append(",").append(appArray[5]).append(",").append(appArray[6]).append(",");
+            				sb.append(appArray[7]).append(",").append(appArray[8]);
+
+            				String[] appToValueArray = sb.toString().split(",");
+            				appMap.put(appArray[0], appToValueArray);
+            				sb.delete(0, sb.length());
+
+            			}
+            		} catch (Exception e) {
+            			e.printStackTrace();
+            		}
+            	}
+
+            	public static Map<String, String[]> getAppMap() {
+            		return appMap;
+            	}
+
+            	public static void setAppMap(Map<String, String[]> appMap) {
+            		LoadHdfsTable.appMap = appMap;
+            	}
+
+            }
+
+
+        c.ReadHdfsFile.classs
+             package util;
+
+             import java.io.BufferedReader;
+             import java.io.FileReader;
+             import java.io.InputStreamReader;
+
+             import org.apache.hadoop.conf.Configuration;
+             import org.apache.hadoop.fs.FSDataInputStream;
+             import org.apache.hadoop.fs.FileSystem;
+             import org.apache.hadoop.fs.Path;
+
+             /** 读取文件 **/
+             public class ReadHdfsFile {
+             	public static BufferedReader fileReader(String fileName) throws Exception {
+             //		Configuration conf = new Configuration();
+             //		FileSystem fs = FileSystem.get(conf);
+             //		FSDataInputStream in = fs.open(new Path(fileName));
+             //		BufferedReader br = new BufferedReader(new InputStreamReader(in));
+             		FileReader fr = new FileReader("D:\\share\\project\\userdraw\\appTab.txt");
+             		return new BufferedReader(fr);
+             	}
+             }
+
+        d.TextArrayWritable类
+            package util;
+
+            import java.util.ArrayList;
+
+            import org.apache.hadoop.io.ArrayWritable;
+            import org.apache.hadoop.io.Text;
+
+            public class TextArrayWritable extends ArrayWritable {
+                public TextArrayWritable() {
+                    super(Text.class);
+                }
+
+                public TextArrayWritable(String[] strings) {
+                    super(Text.class);
+                    Text[] texts = new Text[strings.length];
+                    for (int i = 0; i < strings.length; i++) {
+                        texts[i] = new Text(strings[i]);
+                    }
+                    set(texts);
+                }
+
+                public TextArrayWritable(ArrayList<String> strings) {
+                    super(Text.class);
+
+                    Text[] texts = new Text[strings.size()];
+                    int i = 0;
+                    for (String str : strings) {
+                        texts[i] = new Text(str);
+                        i++;
+                    }
+                    set(texts);
+                }
+
+                public ArrayList<String> toArrayList(String[] writables) {
+                    ArrayList<String> arraylist = new ArrayList<String>();
+                    for (String writable : writables) {
+                        arraylist.add(writable.toString());
+                    }
+                    return arraylist;
+                }
+
+                public ArrayList<String> toArrayList() {
+                    return toArrayList(super.toStrings());
+                }
+
+            }
+
+三、资源文件
+-------------------------------------
+    1.Resources
+        [UserDraw.properties]
+        #用户画像配置文件：
+        ################################
+        #字段分隔符号
+        Separator=\\|
+        #日期
+        Date=11
+        #手机号
+        MDN=0
+        #appID
+        appID=15
+        #计数
+        count=1
+        #使用时长
+        ProcedureTime=12
+        #Hbase数据库配置文件：
+        consite=hbase.zookeeper.quorum
+        hbaseip=192.168.0.4,192.168.0.5,192.168.0.6
+        coftime=dfs.socket.timeout
+        time=180000
+        tableDraw=user_draw
+
+    2.pom.xml依赖
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project xmlns="http://maven.apache.org/POM/4.0.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+            <modelVersion>4.0.0</modelVersion>
+
+            <groupId>groupId</groupId>
+            <artifactId>UserDraw</artifactId>
+            <version>1.0-SNAPSHOT</version>
+
+            <dependencies>
+                <dependency>
+                    <groupId>commons-codec</groupId>
+                    <artifactId>commons-codec</artifactId>
+                    <version>1.4</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-client</artifactId>
+                    <version>1.2.4</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hbase</groupId>
+                    <artifactId>hbase-server</artifactId>
+                    <version>1.2.4</version>
+                </dependency>
+
+            </dependencies>
+        </project>
+
+
+四、其他
+------------------------------------------------
+    1.创建hbase表：
+      create 'user_draw',{NAME=>'draw',VERSIONS=>1,BLOCKCACHE=>true,BLOOMFILTER=>'ROW',COMPRESSION=>'SNAPPY'},
+      {SPLITS => ['/','+','0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w',
+      'x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']}
+
+    2.入库hbase代码：
+	    for (Text v2 : val) {
+			String[] splited = v2.toString().split("\\|");
+			//rowkey
+			if(k2.toString().length()!=0){
+				Put put = new Put(Bytes.toBytes(k2.toString()));
+
+				//跳过写入Hlog，提高写入速度
+				put.setDurability(Durability.SKIP_WAL);
+				put.add(Bytes.toBytes("draw"), Bytes.toBytes("mdn"), Bytes.toBytes(splited[1]));
+				put.add(Bytes.toBytes("draw"), Bytes.toBytes("male"), Bytes.toBytes(splited[2]));
+				put.add(Bytes.toBytes("draw"), Bytes.toBytes("female"), Bytes.toBytes(splited[3]));
+				put.add(Bytes.toBytes("draw"), Bytes.toBytes("age1"), Bytes.toBytes(splited[4]));
+				put.add(Bytes.toBytes("draw"), Bytes.toBytes("age2"), Bytes.toBytes(splited[5]));
+				put.add(Bytes.toBytes("draw"), Bytes.toBytes("age3"), Bytes.toBytes(splited[6]));
+				put.add(Bytes.toBytes("draw"), Bytes.toBytes("age4"), Bytes.toBytes(splited[7]));
+				put.add(Bytes.toBytes("draw"), Bytes.toBytes("age5"), Bytes.toBytes(splited[8]));
+				context.write(NullWritable.get(), put);
+			}
+
+		}
+
+
+
+
